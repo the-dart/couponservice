@@ -9,7 +9,7 @@ import (
 	"os"
 	"strconv"
 
-	pb "couponservice/genproto"
+	pb "github.com/bobbsley/couponservice/genproto"
 
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
