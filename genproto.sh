@@ -17,5 +17,4 @@
 PATH=$PATH:$GOPATH/bin
 protodir=../../pb
 
-[ -d genproto ] ||  mkdir genproto
-protoc --go-grpc_out=genproto -I $protodir $protodir/demo.proto
+protoc --proto_path=$protodir --go_out=genproto --go_opt=paths=source_relative --go-grpc_out=genproto --go-grpc_opt=paths=source_relative $protodir/demo.proto
