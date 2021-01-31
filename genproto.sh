@@ -17,4 +17,4 @@
 PATH=$PATH:$GOPATH/bin
 protodir=../../pb
 
-protoc --proto_path=$protodir --go_out=genproto --go_opt=paths=source_relative --go-grpc_out=genproto --go-grpc_opt=paths=source_relative $protodir/demo.proto
+protoc --go_out=plugins=grpc:genproto -I $protodir $protodir/demo.proto
