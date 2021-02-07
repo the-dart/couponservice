@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	pb "couponservice/genproto"
+	pb "github.com/bobbsley/couponservice/genproto"
 )
 
 func TestValidCoupon(t *testing.T) {
