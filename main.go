@@ -39,7 +39,7 @@ func init() {
 	log.Out = os.Stdout
 }
 
-var validCoupons map[string]int = make(map[string]int)
+var validCoupons = make(map[string]int)
 
 // readCouponCodes reads coupons from a given .csv file into the memory.
 // Returns error when CSV file doesn't exist, isn't parsable or has no discount codes.
@@ -84,17 +84,22 @@ func readCouponCodes(fileName string) error {
 func init() {
 	err := readCouponCodes("coupons.csv")
 	if err != nil {
-		log.Infof("no discount codes found")
+		log.Info("no discount codes found")
 	}
 }
 
 func main() {
+	log.Info("couponservice started")
+
+	// Read the port from ENV if it was set
 	port := defaultPort
 	if value, ok := os.LookupEnv("PORT"); ok {
 		port = value
 	}
 	port = fmt.Sprintf(":%s", port)
+	log.Infof("trying to bind to %s", port)
 
+	// Bind to the port, register the gRPC server
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -108,7 +113,10 @@ func main() {
 	reflection.Register(grpcServer)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
+	} else {
+		log.Infof("couponservice successfuly registered on %s", port)
 	}
+
 }
 
 // server controls RPC service responses.
