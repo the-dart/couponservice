@@ -44,6 +44,7 @@ var validCoupons = make(map[string]int)
 // readCouponCodes reads coupons from a given .csv file into the memory.
 // Returns error when CSV file doesn't exist, isn't parsable or has no discount codes.
 func readCouponCodes(fileName string) error {
+	log.Infof("reading coupon codes from the CSV file")
 	f, err := os.Open(fileName)
 	if err != nil {
 		log.Error("CSV file not found")
@@ -63,17 +64,17 @@ func readCouponCodes(fileName string) error {
 		}
 		discount, err := strconv.Atoi(row[1])
 		if err != nil {
-			log.Warnf("coupn code \"%v\" with incorrect value %v found in CSV file", row[1])
+			log.Warnf("coupon code '%v' with incorrect value %v found in CSV file", row[1])
 			discount = 0
 		} else if discount < 0 {
-			log.Warnf("coupon code \"%v\" with discount %v%% smaller than 0% found in CSV file", row[1])
+			log.Warnf("coupon code '%v' with discount %v%% smaller than 0% found in CSV file", row[1])
 			discount = 0
 		} else if discount > 100 {
-			log.Warnf("coupon code \"%v\" with discount %v%% bigger than 100% found in CSV file", row[1])
+			log.Warnf("coupon code '%v' with discount %v%% bigger than 100% found in CSV file", row[1])
 			discount = 100
 		}
 		validCoupons[row[0]] = discount
-		log.Infof("coupon code \"%v\" with discount %v%% added", row[0], discount)
+		log.Infof("coupon code '%v' with discount %v%% added", row[0], discount)
 	}
 	if len(validCoupons) == 0 {
 		return err
@@ -82,6 +83,7 @@ func readCouponCodes(fileName string) error {
 }
 
 func init() {
+	log.Info("couponservice started")
 	err := readCouponCodes("coupons.csv")
 	if err != nil {
 		log.Info("no discount codes found")
@@ -89,20 +91,19 @@ func init() {
 }
 
 func main() {
-	log.Info("couponservice started")
-
 	// Read the port from ENV if it was set
 	port := defaultPort
 	if value, ok := os.LookupEnv("PORT"); ok {
 		port = value
 	}
 	port = fmt.Sprintf(":%s", port)
-	log.Infof("trying to bind to %s", port)
 
 	// Bind to the port, register the gRPC server
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("couponservice failed to to listen on port %s. %v", port,err)
+	} else {
+		log.Infof("listening on port %s", port)
 	}
 	grpcServer := grpc.NewServer()
 	svc := &server{}
@@ -110,11 +111,11 @@ func main() {
 	healthpb.RegisterHealthServer(grpcServer, svc)
 
 	// Register reflection service on gRPC server.
+	log.Infof("couponservice successfuly registered on %s", port)
 	reflection.Register(grpcServer)
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	} else {
-		log.Infof("couponservice successfuly registered on %s", port)
+
+	if err := grpcServer.Serve(lis); err == nil {
+		log.Fatalf("couponservice failed. %v", err)
 	}
 
 }
@@ -145,11 +146,11 @@ func (s *server) RedeemCoupon(ctx context.Context, in *pb.CouponRequest) (*pb.Co
 
 	if ok {
 		isValid = true
-		log.Infof("coupon %s valid with %v%% discount", coupon, discount)
+		log.Infof("coupon '%s' valid with %v%% discount", coupon, discount)
 	} else {
 		isValid = false
 		discount = 0
-		log.Infof("coupon %s invalid", coupon)
+		log.Infof("coupon '%s' invalid", coupon)
 	}
 
 	return &pb.CouponResponse{Validity: isValid, DiscountPercentage: int32(discount)}, nil
